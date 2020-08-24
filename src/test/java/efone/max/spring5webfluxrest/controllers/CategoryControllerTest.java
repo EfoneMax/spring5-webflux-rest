@@ -8,11 +8,15 @@ import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.reactivestreams.Publisher;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.Flow;
+
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 public class CategoryControllerTest {
@@ -48,5 +52,19 @@ public class CategoryControllerTest {
         webTestClient.get().uri("/api/v1/categories/btw")
                 .exchange()
                 .expectBody(Category.class);
+    }
+
+    @Test
+    public void testCreateCategory() {
+        BDDMockito.given(repository.saveAll(any(Publisher.class)))
+                .willReturn(Flux.just(Category.builder().build()));
+
+        Mono<Category> catToSaveMono = Mono.just(Category.builder().description("Some cattt").build());
+
+        webTestClient.post().uri(CategoryController.URL)
+                .body(catToSaveMono, Category.class)
+                .exchange()
+                .expectStatus()
+                .isCreated();
     }
 }
