@@ -7,15 +7,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.reactivestreams.Publisher;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 
 @RunWith(MockitoJUnitRunner.class)
 public class VendorControllerTest {
@@ -79,5 +80,36 @@ public class VendorControllerTest {
                 .exchange()
                 .expectStatus()
                 .isOk();
+    }
+
+    @Test
+    public void testPatchWithChanges() {
+        Mono<Vendor> firstVendor = Mono.just(Vendor.builder().firstname("FirstFirstName").build());
+        BDDMockito.given(repository.findById(anyString())).willReturn(Mono.just(Vendor.builder().build()));
+        BDDMockito.given(repository.save(any(Vendor.class))).willReturn(
+                firstVendor);
+
+        webTestClient.patch().uri(VendorController.URL + "/324234d")
+                .body(firstVendor, Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+    }
+
+    @Test
+    public void testPatchNoChanges() {
+        Mono<Vendor> firstVendor = Mono.just(Vendor.builder().id("324234d").firstname("FirstFirstName").build());
+        BDDMockito.given(repository.findById(anyString())).willReturn(
+                firstVendor);
+        BDDMockito.given(repository.save(any(Vendor.class))).willReturn(
+                firstVendor);
+
+        webTestClient.patch().uri(VendorController.URL + "/324234d")
+                .body(firstVendor, Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        BDDMockito.verify(repository, never()).save(any());
     }
 }

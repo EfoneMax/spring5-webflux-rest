@@ -1,10 +1,12 @@
 package efone.max.spring5webfluxrest.controllers;
 
+import efone.max.spring5webfluxrest.domain.Category;
 import efone.max.spring5webfluxrest.domain.Vendor;
 import efone.max.spring5webfluxrest.repositories.VendorRepository;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -46,5 +48,22 @@ public class VendorController {
     Mono<Vendor> update(@PathVariable String id, @RequestBody Vendor vendor) {
         vendor.setId(id);
         return repository.save(vendor);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PatchMapping("{id}")
+    Mono<Vendor> patch(@PathVariable String id, @RequestBody Vendor vendor) {
+        Vendor foundVendor = repository.findById(id).block();
+        vendor.setId(id);
+        if (foundVendor != null && !foundVendor.equals(vendor)) {
+            if (vendor.getFirstname() != null) {
+                foundVendor.setFirstname(vendor.getFirstname());
+            }
+            if (vendor.getLastname() != null) {
+                foundVendor.setLastname(vendor.getLastname());
+            }
+            return repository.save(foundVendor);
+        }
+        return Mono.just(foundVendor);
     }
 }
