@@ -13,6 +13,8 @@ import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 public class CategoryControllerTest {
 
@@ -75,5 +77,41 @@ public class CategoryControllerTest {
                 .exchange()
                 .expectStatus()
                 .isOk();
+    }
+
+    @Test
+    public void testPatchWithChanges() {
+        BDDMockito.given(repository.findById(anyString()))
+                .willReturn(Mono.just(Category.builder().build()));
+        BDDMockito.given(repository.save(any(Category.class)))
+                .willReturn(Mono.just(Category.builder().build()));
+
+        Mono<Category> catToSaveMono = Mono.just(Category.builder().description("Some cattt").build());
+
+        webTestClient.patch().uri(CategoryController.URL + "/112fds")
+                .body(catToSaveMono, Category.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        BDDMockito.verify(repository, times(1)).save(any());
+    }
+
+    @Test
+    public void testPatchNoChanges() {
+        BDDMockito.given(repository.findById(anyString()))
+                .willReturn(Mono.just(Category.builder().id("112fds").description("123").build()));
+        BDDMockito.given(repository.save(any(Category.class)))
+                .willReturn(Mono.just(Category.builder().build()));
+
+        Mono<Category> catToSaveMono = Mono.just(Category.builder().description("123").build());
+
+        webTestClient.patch().uri(CategoryController.URL + "/112fds")
+                .body(catToSaveMono, Category.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        BDDMockito.verify(repository, never()).save(any());
     }
 }

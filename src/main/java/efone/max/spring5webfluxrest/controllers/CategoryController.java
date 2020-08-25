@@ -5,6 +5,7 @@ import efone.max.spring5webfluxrest.repositories.CategoryRepository;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -46,5 +47,17 @@ public class CategoryController {
     Mono<Category> update(@PathVariable String id, @RequestBody Category category) {
         category.setId(id);
         return repository.save(category);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PatchMapping("{id}")
+    Mono<Category> patch(@PathVariable String id, @RequestBody Category category) {
+        Category foundCategory = repository.findById(id).block();
+        category.setId(id);
+        if (foundCategory != null && !foundCategory.equals(category)) {
+            foundCategory.setDescription(category.getDescription());
+            return repository.save(foundCategory);
+        }
+        return Mono.just(foundCategory);
     }
 }
